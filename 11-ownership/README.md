@@ -4,6 +4,7 @@
 > **Topic No.:** `11`  
 > **Topic Name:** `Ownership`  
 > **Group No.:** `11`
+> 
 > **ประเด็นหลักที่ควรครอบคลุม:** ownership rules, move, copy, scope, memory management
 
 ---
