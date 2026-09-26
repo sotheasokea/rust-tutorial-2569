@@ -165,51 +165,106 @@ fn main() {
 
 ## 7. Common Mistakes
 
-### Mistake 1 — `[ชื่อข้อผิดพลาด]`
+### Mistake 1 — `การพยายามใช้ค่าที่ถูกย้าย (Move) ไปแล้ว`
 
 **Problem**
 
-`[อธิบายปัญหา]`
+`เมื่อ my_name ถูกส่งไปยังฟังก์ชัน print_name() สิทธิ์ความเป็นเจ้าของ (ownership) ของ String จะถูกย้ายไปยังฟังก์ชันนั้น ดังนั้น my_name จึงไม่สามารถนำมาใช้งานต่อใน main() ได้`
+
 
 **Incorrect Code**
 
-```rust
-// Incorrect example
-```
+[View the incorrect code](./code/common-mistake/mistake_1_moved_value_incorrect.rs)
 
 **Correct Code**
 
-```rust
-// Correct example
-```
+[View the correct code](./code/common-mistake/mistake_1_moved_value_correct.rs)
 
 **Why?**
 
-`[อธิบายสาเหตุ]`
+`.clone() จะสร้าง สำเนาแบบ deep copy ของ String จัดสรรหน่วยความจำ heap ใหม่ แต่มีเนื้อหาเดียวกัน ตัว clone นี่แหละที่จะถูกย้ายเข้าไปใน print ส่วน message ตัวเดิมใน main ไม่ถูกแตะต้องเลย จึงยังใช้งานต่อได้หลังจากนั้น`
+
 
 ---
 
-### Mistake 2 — `[ชื่อข้อผิดพลาด]`
+### Mistake 2 — `เข้าใจผิดว่าการ assign คือการ copy ทั้งที่จริงๆ คือการ move`
 
 **Problem**
 
-`[อธิบายปัญหา]`
+`มาจากภาษาอย่าง Python, Java หรือ JS การเขียน let s2 = s1; อาจดูเหมือนแค่สร้างตัวแปรตัวที่สองที่ชี้ไปยังข้อมูลเดียวกัน แล้วใช้ได้ทั้งสองชื่อ แต่ใน Rust สำหรับ type ที่ไม่ใช่ Copy นี่คือการ move ไม่ใช่การ copy s1 จะใช้งานไม่ได้ทันทีที่ s2 ถูกสร้างขึ้น`
+
 
 **Incorrect Code**
 
-```rust
-// Incorrect example
-```
+[View the incorrect code](./code/common-mistake/mistake_2_confusing_assign_and_copy_incorrect.rs)
 
 **Correct Code**
 
-```rust
-// Correct example
-```
+[View the correct code](./code/common-mistake/mistake_2_confusing_assign_and_copy_correct.rs)
 
 **Why?**
 
-`[อธิบายสาเหตุ]`
+`ใช้ .clone() ถ้าต้องการให้มีเจ้าของสองตัวจริงๆ ที่เป็นอิสระจากกัน หรือใช้แค่ s2 ต่อไป แล้วเลิกพยายามใช้ s1`
+
+---
+### Mistake 3 — `Move บางส่วนออก struct (Partial move)`
+
+**Problem**
+
+`การย้าย field เดียวออกจาก struct จะทำให้ struct นั้น "ใช้งานไม่ได้บางส่วน" จะใช้ struct ทั้งก้อน (หรือ field ที่ถูกย้ายไปนั้น) อีกไม่ได้ ถึงแม้ field อื่นๆ จะยังใช้งานได้ปกติก็ตาม จุดนี้มักทำให้คนงงตอนแรกที่เจอ เพราะ error message อาจดูสับสน struct ยัง "มีอยู่" แต่บาง field ในนั้นใช้ไม่ได้แล้ว`
+
+
+**Incorrect Code**
+
+[View the incorrect code](./code/common-mistake/mistake_3_partial_move_from_struct_incorrect.rs)
+
+**Correct Code**
+
+[View the correct code](./code/common-mistake/mistake_3_partial_move_from_struct_correct.rs)
+
+**Why?**
+
+`clone field นั้นถ้าต้องการใช้ทั้งสองที่ หรือ destructure struct ทั้งหมดแล้วสร้างใหม่ตามที่ต้องการ หรือจัดโครงสร้างโค้ดใหม่ให้การ move เกิดขึ้นเป็นลำดับสุดท้าย`
+
+---
+### Mistake 4 — `Move ค่าเข้าไปใน loop แล้วพยายามใช้ซ้ำ`
+
+**Problem**
+
+`การเรียก greet(name) ครั้งแรกจะย้าย name เข้าไปในฟังก์ชัน พอถึงรอบถัดไปของ loop name ก็ไม่มีอยู่แล้ว compiler จะฟ้องว่าการเรียกครั้งที่สองใช้ค่าที่ถูกย้ายไปแล้ว นี่เป็นข้อผิดพลาดที่พบบ่อยมากเวลาแปลงโค้ดแบบ "loop ที่ใช้ตัวแปรซ้ำ" มาจากภาษาอื่น`
+
+
+**Incorrect Code**
+
+[View the incorrect code](./code/common-mistake/mistake_4_moved_value_in_loop_incorrect.rs)
+
+**Correct Code**
+
+[View the correct code](./code/common-mistake/mistake_4_moved_value_in_loop_correct.rs)
+
+**Why?**
+
+`clone ข้างในลูปถ้าต้องการสำเนาใหม่ทุกรอบ หรือจัดโครงสร้างโค้ดใหม่ให้ฟังก์ชันรับค่าไปแล้ว return กลับมา`
+
+---
+### Mistake 5 — `Anti-Pattern: "Clone ทุกอย่าง"`
+
+**Problem**
+
+`แม้จะไม่ใช่ข้อผิดพลาดระดับคอมไพเลอร์ แต่นี่คือข้อผิดพลาดทางพฤติกรรม เมื่อ Borrow Checker แจ้งเตือนข้อผิดพลาด ผู้เริ่มต้นมักจะใส่ .clone() ไว้ในทุกตัวแปรเพียงเพื่อบังคับให้โค้ดสามารถคอมไพล์ผ่าน`
+
+
+**Incorrect Code**
+
+[View the incorrect (not recommended) code](./code/common-mistake/mistake_5_clone_everything_incorrect.rs)
+
+**Correct Code**
+
+[View the correct (recommended) code](./code/common-mistake/mistake_5_clone_everything_correct.rs)
+
+**Why?**
+
+`การถอยกลับมาทบทวนโครงสร้างโปรแกรมใหม่: พิจารณาว่าตัวแปรใดควรเป็นเจ้าของข้อมูลอย่างแท้จริง และให้ส่วนที่เหลือในโค้ดทำการยืม (Borrow) ไปใช้แทน`
 
 ---
 
