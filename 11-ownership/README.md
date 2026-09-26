@@ -141,7 +141,6 @@ fn main() {
     } // s หลุด scope ที่นี่ -> ถูก drop
     // println!("{}", s); //  error: s ไม่มีผลแล้วนอก scope
 }
-}
 ```
 **Explanation**
 
